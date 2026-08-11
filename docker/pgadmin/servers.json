@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "SkillBridge DB",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "skillbridge_db",
+      "Username": "skillbridge",
+      "SSLMode": "prefer",
+      "Favorite": true
+    }
+  }
+}

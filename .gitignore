@@ -1,0 +1,37 @@
+# Node
+node_modules/
+dist/
+.vite/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# Environment Files & Secrets (Never commit .env files or credentials)
+.env
+.env.*
+!.env.example
+!.env.example
+backend/.env
+frontend/.env
+*.key
+*.pem
+secrets/
+credentials/
+
+# Database & Uploads
+*.sqlite3
+uploads/*
+!uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store
