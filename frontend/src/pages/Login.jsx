@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { Mail, Lock, Eye, EyeOff, LogIn, ArrowRight } from 'lucide-react';
+import { auth, googleProvider, signInWithPopup, isFirebaseConfigured } from '../config/firebase';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -31,11 +32,35 @@ export const Login = () => {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
+    setError('');
+
+    if (!isFirebaseConfigured()) {
+      setError('Firebase Web configuration is missing. Please check VITE_FIREBASE_* environment variables.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      await googleLogin('simulated_google_id_token_xyz');
+      // 1. Firebase Google Authentication via Popup
+      const result = await signInWithPopup(auth, googleProvider);
+      
+      // 2. Obtain Firebase User ID Token securely
+      const idToken = await result.user.getIdToken(true);
+
+      // 3. Send ID Token to FastAPI backend for verification & SkillBridge JWT issue
+      await googleLogin(idToken);
       navigate('/dashboard');
     } catch (err) {
-      setError('Google Authentication failed.');
+      console.error("Firebase Google Sign-In error:", err);
+      if (err.code === 'auth/popup-closed-by-user') {
+        setError('Sign-in cancelled. Popup window was closed before completion.');
+      } else if (err.code === 'auth/popup-blocked') {
+        setError('Sign-in popup was blocked by browser. Please enable popups for this site.');
+      } else if (err.code === 'auth/unauthorized-domain') {
+        setError('Current domain is not authorized in Firebase Console (Authentication > Settings > Authorized Domains).');
+      } else {
+        setError(err.response?.data?.detail || err.message || 'Google Authentication failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -138,11 +163,11 @@ export const Login = () => {
             <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800"></div>
           </div>
 
-          {/* Google OAuth Login Button */}
+          {/* Firebase Google OAuth Login Button */}
           <button
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-3 transition-colors"
+            className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-3 transition-colors disabled:opacity-50"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

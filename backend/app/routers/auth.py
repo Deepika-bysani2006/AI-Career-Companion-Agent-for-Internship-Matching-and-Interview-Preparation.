@@ -1,6 +1,6 @@
 """
 Authentication Endpoints for SkillBridge.
-Handles user registration, login, Google OAuth, password reset, token refresh, and email verification.
+Handles user registration, email/password login, Firebase Google OAuth, password reset, token refresh, and email verification.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -90,15 +90,10 @@ def login_user(user_data: UserLogin, db: Session = Depends(get_db)):
 
 @router.post("/google", response_model=TokenResponse)
 def google_oauth_login(data: GoogleAuthRequest, db: Session = Depends(get_db)):
-    """Handles Google OAuth sign-in and account creation."""
+    """Handles Firebase Google OAuth sign-in and server-side token verification."""
     google_data = verify_google_token(data.credential)
-    if not google_data:
-        # Fallback for local demo OAuth if token parse is client-side simulated
-        google_data = {
-            "email": "demo.google@skillbridge.com",
-            "name": "Google User",
-            "picture": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"
-        }
+    if not google_data or not google_data.get("email"):
+        raise HTTPException(status_code=401, detail="Invalid or expired Google authentication token.")
 
     email = google_data["email"]
     user = db.query(User).filter(User.email == email).first()
@@ -120,6 +115,10 @@ def google_oauth_login(data: GoogleAuthRequest, db: Session = Depends(get_db)):
 
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
+
+    log = ActivityLog(user_id=user.id, action="Google Login", details="Logged in via Firebase Google OAuth.")
+    db.add(log)
+    db.commit()
 
     return {
         "access_token": access_token,
