@@ -1,6 +1,6 @@
 """
 Core Configuration File for SkillBridge Backend.
-Loads environment variables for PostgreSQL, JWT Security, Google OAuth, Apify, Gemini, and Ollama.
+Loads environment variables for PostgreSQL, JWT Security, Google OAuth, Apify (4 Job Providers), Gemini, and Ollama.
 Supports both Docker ('postgres') and local Windows VS Code development ('127.0.0.1' / 'localhost') as well as Cloud DBs (Neon/Render).
 No real credentials or passwords are hardcoded in this source file.
 """
@@ -90,9 +90,13 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
     GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
-    # External Integrations (Apify & AI Providers)
+    # External Integrations (Apify Providers & AI Engines)
     APIFY_API_TOKEN: str = os.getenv("APIFY_API_TOKEN", "")
-    APIFY_ACTOR_ID: str = os.getenv("APIFY_ACTOR_ID", "")
+    APIFY_LINKEDIN_ACTOR_ID: str = os.getenv("APIFY_LINKEDIN_ACTOR_ID", os.getenv("APIFY_ACTOR_ID", "apify/linkedin-jobs-scraper"))
+    APIFY_NAUKRI_ACTOR_ID: str = os.getenv("APIFY_NAUKRI_ACTOR_ID", "")
+    APIFY_UNSTOP_ACTOR_ID: str = os.getenv("APIFY_UNSTOP_ACTOR_ID", "")
+    APIFY_INTERNSHALA_ACTOR_ID: str = os.getenv("APIFY_INTERNSHALA_ACTOR_ID", "")
+
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 

@@ -73,6 +73,11 @@ class ResumeParseResponse(BaseModel):
     parsed_data: Dict[str, Any]
 
 # --- Job Schemas ---
+class ScrapeJobsRequest(BaseModel):
+    sources: Optional[List[str]] = Field(default_factory=lambda: ["linkedin", "naukri", "unstop", "internshala"])
+    keywords: Optional[List[str]] = Field(default_factory=lambda: ["AI", "Data Science", "Python"])
+    location: Optional[str] = "India"
+
 class JobResponse(BaseModel):
     job_id: str
     company_name: str

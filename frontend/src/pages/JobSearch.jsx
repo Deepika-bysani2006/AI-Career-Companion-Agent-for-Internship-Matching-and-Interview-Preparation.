@@ -3,7 +3,7 @@ import { Navbar } from '../components/Navbar';
 import { Sidebar } from '../components/Sidebar';
 import { Footer } from '../components/Footer';
 import { PlatformBadge } from '../components/PlatformBadge';
-import { Search, Filter, Bookmark, ExternalLink, Sparkles, MapPin, Building2, Briefcase } from 'lucide-react';
+import { Search, Filter, Bookmark, ExternalLink, Sparkles, MapPin, Building2, Briefcase, RefreshCw, CheckCircle2, AlertTriangle, Layers } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../utils/axios';
 
@@ -15,7 +15,15 @@ export const JobSearch = () => {
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const platforms = ['All', 'LinkedIn', 'Naukri', 'Unstop', 'Internshala', 'Indeed', 'Google', 'Microsoft', 'IBM', 'Amazon'];
+  // Scraper Modal State
+  const [showScraperModal, setShowScraperModal] = useState(false);
+  const [selectedSources, setSelectedSources] = useState(['linkedin', 'naukri', 'unstop', 'internshala']);
+  const [scrapeKeywords, setScrapeKeywords] = useState('AI, Data Science, Python');
+  const [scrapeLocation, setScrapeLocation] = useState('India');
+  const [scraping, setScraping] = useState(false);
+  const [scrapeResults, setScrapeResults] = useState(null);
+
+  const platforms = ['All', 'LinkedIn', 'Naukri', 'Unstop', 'Internshala'];
 
   const fetchJobs = async (currentSearch = search, currentSource = source) => {
     setLoading(true);
@@ -51,6 +59,51 @@ export const JobSearch = () => {
     fetchJobs(search, platform);
   };
 
+  const toggleSourceSelection = (srcId) => {
+    if (selectedSources.includes(srcId)) {
+      setSelectedSources(selectedSources.filter(s => s !== srcId));
+    } else {
+      setSelectedSources([...selectedSources, srcId]);
+    }
+  };
+
+  const handleSelectAllSources = () => {
+    if (selectedSources.length === 4) {
+      setSelectedSources([]);
+    } else {
+      setSelectedSources(['linkedin', 'naukri', 'unstop', 'internshala']);
+    }
+  };
+
+  const handleRunScraper = async () => {
+    if (selectedSources.length === 0) {
+      alert("Please select at least one job provider source.");
+      return;
+    }
+    setScraping(true);
+    setScrapeResults(null);
+
+    const kwList = scrapeKeywords.split(',').map(k => k.strip ? k.strip() : k.trim()).filter(Boolean);
+
+    try {
+      const res = await api.post('/jobs/scrape', {
+        sources: selectedSources,
+        keywords: kwList.length ? kwList : ["AI", "Python"],
+        location: scrapeLocation || "India"
+      });
+      setScrapeResults(res.data);
+      fetchJobs(search, source);
+    } catch (err) {
+      console.error("Apify Scrape error:", err);
+      setScrapeResults({
+        status: "error",
+        message: err.response?.data?.detail || "Failed to execute live scraping request."
+      });
+    } finally {
+      setScraping(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
       <Navbar />
@@ -59,9 +112,17 @@ export const JobSearch = () => {
         <Sidebar />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-8">
-          <div>
-            <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">AI Job Search & Mock Scraper Engine</h1>
-            <p className="text-sm text-slate-500 mt-1">Search over 1,000 active internships across LinkedIn, Naukri, Unstop & Internshala</p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">AI Job Search & Live Multi-Provider Engine</h1>
+              <p className="text-sm text-slate-500 mt-1">Search over 1,000+ active internships across LinkedIn, Naukri, Unstop & Internshala</p>
+            </div>
+            <button
+              onClick={() => setShowScraperModal(true)}
+              className="px-5 py-2.5 rounded-xl font-bold text-white bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-sm shadow-md flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" /> Trigger Live Apify Scraper
+            </button>
           </div>
 
           {/* Search & Filters Bar */}
@@ -73,7 +134,7 @@ export const JobSearch = () => {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by job title, company name, or technology (e.g. Python, React, IBM)..."
+                  placeholder="Search by job title, company name, or technology (e.g. Python, React, Data Science)..."
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>
@@ -89,12 +150,12 @@ export const JobSearch = () => {
               
               {/* Platform Source Filter Pills */}
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="font-bold text-slate-400 uppercase mr-1">Platform Source:</span>
+                <span className="font-bold text-slate-400 uppercase mr-1">Job Provider:</span>
                 {platforms.map((p) => (
                   <button
                     key={p}
                     onClick={() => handlePlatformClick(p)}
-                    className={`px-2.5 py-1 rounded-full font-bold transition-all ${
+                    className={`px-3 py-1 rounded-full font-bold transition-all ${
                       source === p
                         ? 'bg-slate-900 text-white dark:bg-teal-600 shadow-sm'
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
@@ -166,7 +227,7 @@ export const JobSearch = () => {
                       to={`/jobs/${job.job_id}`}
                       className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-slate-900 dark:bg-slate-800 hover:bg-teal-600 transition-colors text-center"
                     >
-                      View Job Details
+                      View Details
                     </Link>
 
                     <a
@@ -184,6 +245,126 @@ export const JobSearch = () => {
           )}
         </main>
       </div>
+
+      {/* Multi-Provider Apify Scraper Modal */}
+      {showScraperModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="glass-card max-w-lg w-full p-6 rounded-2xl shadow-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-teal-600" />
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Multi-Provider Live Job Scraper</h2>
+              </div>
+              <button
+                onClick={() => setShowScraperModal(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="font-bold text-slate-700 dark:text-slate-300 uppercase">Select Providers to Scrape:</label>
+                  <button
+                    onClick={handleSelectAllSources}
+                    className="text-teal-600 dark:text-teal-400 font-bold hover:underline"
+                  >
+                    {selectedSources.length === 4 ? 'Deselect All' : 'Select All Sources'}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'linkedin', label: 'LinkedIn' },
+                    { id: 'naukri', label: 'Naukri' },
+                    { id: 'unstop', label: 'Unstop' },
+                    { id: 'internshala', label: 'Internshala' },
+                  ].map((src) => (
+                    <label key={src.id} className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                      <input
+                        type="checkbox"
+                        checked={selectedSources.includes(src.id)}
+                        onChange={() => toggleSourceSelection(src.id)}
+                        className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                      />
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{src.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 uppercase block mb-1">Keywords (Comma Separated):</label>
+                <input
+                  type="text"
+                  value={scrapeKeywords}
+                  onChange={(e) => setScrapeKeywords(e.target.value)}
+                  placeholder="AI, Data Science, Python, React"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 uppercase block mb-1">Location:</label>
+                <input
+                  type="text"
+                  value={scrapeLocation}
+                  onChange={(e) => setScrapeLocation(e.target.value)}
+                  placeholder="India or Remote"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white"
+                />
+              </div>
+            </div>
+
+            {/* Scrape Execution Results */}
+            {scrapeResults && (
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+                <div className="flex items-center gap-2 font-bold text-teal-600 dark:text-teal-400">
+                  <CheckCircle2 className="w-4 h-4" /> Scrape Execution Completed
+                </div>
+                <p className="text-slate-600 dark:text-slate-400">
+                  Total New Jobs Inserted: <strong className="text-slate-900 dark:text-white">{scrapeResults.total_jobs_inserted || 0}</strong> | Duplicates Skipped: {scrapeResults.total_duplicates_skipped || 0}
+                </p>
+                {scrapeResults.providers_status?.map((pStatus, idx) => (
+                  <div key={idx} className="p-2 rounded bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[11px]">
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{pStatus.source}</span>
+                    <span className={`px-2 py-0.5 rounded font-bold ${
+                      pStatus.status === 'success' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' :
+                      pStatus.status === 'skipped' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' :
+                      'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                    }`}>
+                      {pStatus.status.toUpperCase()}: {pStatus.message || `${pStatus.jobs_inserted || 0} inserted`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setShowScraperModal(false)}
+                className="px-4 py-2 rounded-xl font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                Close
+              </button>
+              <button
+                onClick={handleRunScraper}
+                disabled={scraping}
+                className="px-5 py-2 rounded-xl font-bold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {scraping ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" /> Scraping Providers...
+                  </>
+                ) : (
+                  'Start Live Scrape'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

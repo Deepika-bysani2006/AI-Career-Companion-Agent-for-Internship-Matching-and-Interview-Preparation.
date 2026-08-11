@@ -57,6 +57,9 @@ def generate_ai_response(prompt: str, system_prompt: Optional[str] = None) -> st
     # 3. Fallback message if AI models are starting up or unconfigured
     return "SkillBridge AI Assistant: Great job pursuing your career goals! Make sure your resume highlights your core projects, skills, and technical achievements."
 
+# Alias for backward compatibility
+generate_ollama_response = generate_ai_response
+
 def review_resume_with_ollama(resume_text: str) -> Dict[str, Any]:
     """Generates AI Resume Review using Ollama or Gemini API."""
     prompt = f"Review the following resume and provide key strengths, missing sections, and formatting feedback:\n\n{resume_text}"

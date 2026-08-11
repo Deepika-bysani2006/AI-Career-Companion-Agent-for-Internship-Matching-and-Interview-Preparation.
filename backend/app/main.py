@@ -19,8 +19,11 @@ from app.seed_data import seed_database
 # Import routers
 from app.routers import auth, user, resumes, jobs, cover_letter, interviews, chat, dashboard, notifications, admin
 
-# Create DB tables
-Base.metadata.create_all(bind=engine)
+# Create DB tables gracefully
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print(f"Database connection warning on startup: {e}")
 
 # Auto seed database
 try:

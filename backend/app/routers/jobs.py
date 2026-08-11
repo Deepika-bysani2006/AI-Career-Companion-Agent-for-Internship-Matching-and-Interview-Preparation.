@@ -1,14 +1,10 @@
 """
-AI Job Search & Mock Scraper Routers for SkillBridge.
-Provides querying over 1000 PostgreSQL mock job records with:
-- Keyword search across titles, companies, locations, descriptions, and required skills JSON
-- Company filter
-- Skill filter
-- Location filter
-- Work mode filter (Remote / Hybrid / Onsite)
-- Internship type filter (Internship / Full Time)
-- Sorting & Pagination
-- Endpoints: GET /jobs, GET /jobs/{id}, GET /jobs/search, GET /jobs/recommended
+AI Job Search & Multi-Provider Scraper Routers for SkillBridge.
+Provides querying over PostgreSQL job records and scraping live listings across 4 providers:
+- LinkedIn
+- Naukri
+- Unstop
+- Internshala
 """
 from typing import Optional, List
 from datetime import datetime, timedelta
@@ -17,8 +13,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import cast, String
 from app.database.session import get_db
 from app.models.models import Job, Company, SavedJob, Application, User, Resume
+from app.schemas.schemas import ScrapeJobsRequest
 from app.routers.user import get_current_user
 from app.services.ai.job_matcher import match_resume_to_job
+from app.services.apify_scraper import execute_multi_source_scrape
 
 router = APIRouter(prefix="/jobs", tags=["AI Job Search"])
 
@@ -41,7 +39,7 @@ def search_jobs(
     db: Session = Depends(get_db)
 ):
     """
-    Queries PostgreSQL mock job listings with filtering by keyword, company, skills, location, work_mode, internship_type, sorting, and pagination.
+    Queries PostgreSQL job listings with filtering by keyword, company, skills, location, work_mode, internship_type, source platform, sorting, and pagination.
     """
     query = db.query(Job).join(Company).filter(Job.is_active == True)
 
@@ -127,7 +125,7 @@ def search_jobs(
 @router.get("/recommendations")
 @router.get("/recommended")
 def get_recommended_jobs(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Returns AI recommended mock job listings matched against candidate profile."""
+    """Returns AI recommended job listings matched against candidate profile."""
     resume = db.query(Resume).filter(Resume.user_id == current_user.id, Resume.is_active == True).first()
     user_skills = ["Python", "JavaScript", "React", "FastAPI", "SQL"]
     if resume and resume.parsed_data and "skills" in resume.parsed_data:
@@ -169,6 +167,18 @@ def get_recommended_jobs(current_user: User = Depends(get_current_user), db: Ses
 
     recommended.sort(key=lambda x: x["match_score"], reverse=True)
     return recommended[:15]
+
+@router.post("/scrape")
+def trigger_multi_provider_scrape(payload: Optional[ScrapeJobsRequest] = None, db: Session = Depends(get_db)):
+    """
+    Executes Apify scraper across requested providers (LinkedIn, Naukri, Unstop, Internshala).
+    Deduplicates and saves new job listings into PostgreSQL without touching existing 1,000 jobs.
+    """
+    sources = payload.sources if (payload and payload.sources) else ["linkedin", "naukri", "unstop", "internshala"]
+    keywords = payload.keywords if (payload and payload.keywords) else ["AI", "Data Science", "Python"]
+    location = payload.location if (payload and payload.location) else "India"
+
+    return execute_multi_source_scrape(db, sources, keywords, location)
 
 @router.get("/{job_id}")
 def get_job_by_id(job_id: str, db: Session = Depends(get_db)):
