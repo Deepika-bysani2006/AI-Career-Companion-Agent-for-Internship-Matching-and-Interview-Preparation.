@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SkillBridge – AI Internship Application Agent</title>
     <meta name="description" content="Connecting Skills to Opportunities. Production-ready AI Internship Application Agent powered by FastAPI, React, PostgreSQL, and NLP." />
+    <meta name="theme-color" content="#0d9488" />
+    <link rel="manifest" href="/manifest.json" />
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,5 +16,14 @@
   <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased selection:bg-teal-500 selection:text-white transition-colors duration-200">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(err => {
+            console.log('SW registration skipped:', err);
+          });
+        });
+      }
+    </script>
   </body>
 </html>

@@ -36,23 +36,26 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# CORS Setup
+# Production CORS Setup
 origins = [
-    "*",
-    settings.FRONTEND_URL,
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://frontend-eight-sigma-kit01hsku5.vercel.app",
 ]
+
+if settings.FRONTEND_URL and settings.FRONTEND_URL not in origins:
+    origins.append(settings.FRONTEND_URL)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
-# Health Check Endpoint
+# Health Check Endpoint (Unauthenticated)
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
