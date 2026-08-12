@@ -21,7 +21,12 @@ class UserLogin(BaseModel):
     password: str
 
 class GoogleAuthRequest(BaseModel):
-    credential: str
+    credential: Optional[str] = None
+    id_token: Optional[str] = None
+    idToken: Optional[str] = None
+
+    def get_token(self) -> str:
+        return self.credential or self.id_token or self.idToken or ""
 
 class TokenResponse(BaseModel):
     access_token: str

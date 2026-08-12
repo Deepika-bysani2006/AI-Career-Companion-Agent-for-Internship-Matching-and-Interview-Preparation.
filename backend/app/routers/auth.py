@@ -14,14 +14,18 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/register", response_model=TokenResponse)
 def register_user(user_data: UserRegister, db: Session = Depends(get_db)):
     """Registers a new student user."""
-    existing_user = db.query(User).filter(User.email == user_data.email).first()
+    email_clean = user_data.email.strip().lower()
+    existing_user = db.query(User).filter(User.email == email_clean).first()
     if existing_user:
-        raise HTTPException(status_code=400, detail="An account with this email address already exists.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An account with this email address already exists. Please sign in or use Google Sign-In."
+        )
 
     hashed_pw = get_password_hash(user_data.password)
     new_user = User(
-        full_name=user_data.full_name,
-        email=user_data.email,
+        full_name=user_data.full_name.strip(),
+        email=email_clean,
         password_hash=hashed_pw,
         phone=user_data.phone,
         college=user_data.college,
@@ -63,9 +67,14 @@ def register_user(user_data: UserRegister, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenResponse)
 def login_user(user_data: UserLogin, db: Session = Depends(get_db)):
     """Authenticates user with email and password."""
-    user = db.query(User).filter(User.email == user_data.email).first()
+    email_clean = user_data.email.strip().lower()
+    user = db.query(User).filter(User.email == email_clean).first()
+    
     if not user or not user.password_hash or not verify_password(user_data.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid email or password.")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password. Please check your credentials or try Google Sign-In."
+        )
 
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
@@ -91,11 +100,21 @@ def login_user(user_data: UserLogin, db: Session = Depends(get_db)):
 @router.post("/google", response_model=TokenResponse)
 def google_oauth_login(data: GoogleAuthRequest, db: Session = Depends(get_db)):
     """Handles Firebase Google OAuth sign-in and server-side token verification."""
-    google_data = verify_google_token(data.credential)
-    if not google_data or not google_data.get("email"):
-        raise HTTPException(status_code=401, detail="Invalid or expired Google authentication token.")
+    token_str = data.get_token()
+    if not token_str:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Missing Google authentication token in request payload."
+        )
 
-    email = google_data["email"]
+    google_data = verify_google_token(token_str)
+    if not google_data or not google_data.get("email"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired Google authentication token. Please try signing in again."
+        )
+
+    email = google_data["email"].strip().lower()
     user = db.query(User).filter(User.email == email).first()
 
     if not user:
@@ -136,7 +155,7 @@ def google_oauth_login(data: GoogleAuthRequest, db: Session = Depends(get_db)):
 @router.post("/forgot-password")
 def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
     """Generates password reset request."""
-    user = db.query(User).filter(User.email == data.email).first()
+    user = db.query(User).filter(User.email == data.email.strip().lower()).first()
     if not user:
         return {"message": "If that email exists, a password reset link has been sent."}
     return {"message": "Password reset link has been dispatched to your email address."}
