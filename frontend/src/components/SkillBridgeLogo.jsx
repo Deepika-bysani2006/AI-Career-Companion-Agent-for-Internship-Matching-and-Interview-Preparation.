@@ -1,41 +1,73 @@
 import React from 'react';
 
-export const SkillBridgeLogo = ({ className = "h-10 w-auto", showText = true }) => {
+export const SkillBridgeLogo = ({ className = "h-11 w-auto", showText = true }) => {
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
-      {/* Authentic SkillBridge Vector Emblem */}
-      <svg viewBox="0 0 500 350" className="h-full w-auto aspect-[5/3.5] select-none filter drop-shadow-sm" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Left Orange Arch */}
-        <path d="M90 200 C150 100, 200 80, 250 180 L230 180 C180 95, 140 115, 100 200 Z" fill="#F59E0B" />
-        <path d="M185 85 L185 180 M150 110 L150 190 M120 145 L120 195 M215 110 L215 180" stroke="#F59E0B" strokeWidth="4" />
+    <div className={`flex items-center gap-3 select-none ${className}`}>
+      {/* Exact Vector Emblem matching Official SkillBridge Brand Design */}
+      <svg
+        viewBox="0 0 600 460"
+        className="h-full w-auto aspect-[6/4.6] filter drop-shadow-sm flex-shrink-0"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Left Orange Suspension Cables & Cable Stays */}
+        <path
+          d="M 90 200 Q 150 110 210 105 Q 260 170 300 185"
+          stroke="#F97316"
+          strokeWidth="11"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <path d="M 125 152 L 125 200 M 150 128 L 150 200 M 175 112 L 175 200 M 195 107 L 195 200" stroke="#F97316" strokeWidth="4.5" />
+        <rect x="202" y="100" width="16" height="100" rx="3" fill="#F97316" />
 
-        {/* Right Cyan Arch */}
-        <path d="M410 200 C350 100, 300 80, 250 180 L270 180 C320 95, 360 115, 400 200 Z" fill="#00A8B5" />
-        <path d="M315 85 L315 180 M350 110 L350 190 M380 145 L380 195 M285 110 L285 180" stroke="#00A8B5" strokeWidth="4" />
+        {/* Right Cyan Suspension Cables & Cable Stays */}
+        <path
+          d="M 510 200 Q 450 110 390 105 Q 340 170 300 185"
+          stroke="#00A8B5"
+          strokeWidth="11"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <path d="M 475 152 L 475 200 M 450 128 L 450 200 M 425 112 L 425 200 M 405 107 L 405 200" stroke="#00A8B5" strokeWidth="4.5" />
+        <rect x="382" y="100" width="16" height="100" rx="3" fill="#00A8B5" />
 
-        {/* Reaching Person Figure */}
-        <circle cx="255" cy="90" r="22" fill="#00A8B5" />
-        <path d="M255 120 C220 150, 235 200, 310 160 C260 180, 240 140, 305 105 Z" fill="#00A8B5" />
+        {/* Center Rising Candidate Figure (Reaching for Opportunity) */}
+        <circle cx="300" cy="118" r="19" fill="#00A8B5" />
+        <path
+          d="M 282 185 C 275 145 285 130 310 122 C 340 110 355 85 362 65 C 345 95 320 120 295 138 C 285 148 280 165 282 185 Z"
+          fill="#00A8B5"
+        />
 
-        {/* Top Orange Star */}
-        <path d="M305 60 L310 75 L325 80 L310 85 L305 100 L300 85 L285 80 L300 75 Z" fill="#F59E0B" />
+        {/* Top 4-Pointed Bright Orange Opportunity Star */}
+        <path
+          d="M 365 42 L 371 58 L 387 64 L 371 70 L 365 86 L 359 70 L 343 64 L 359 58 Z"
+          fill="#F59E0B"
+        />
 
-        {/* Dark Navy Base Bridge Deck */}
-        <path d="M80 200 Q 250 250 420 200 L420 225 Q 250 275 80 225 Z" fill="#0F2038" />
-        <path d="M175 220 L175 240 M325 220 L325 240" stroke="#0F2038" strokeWidth="16" strokeLinecap="round" />
+        {/* Dark Navy Arch Bridge Base Deck */}
+        <path
+          d="M 75 200 Q 300 245 525 200 C 530 220 500 255 300 255 C 100 255 70 220 75 200 Z"
+          fill="#0F2038"
+        />
+        {/* Bridge Pillars */}
+        <path d="M 190 230 L 190 262 M 410 230 L 410 262" stroke="#0F2038" strokeWidth="22" strokeLinecap="round" />
+
+        {/* Brand Name Text: Skill (Navy) Bridge (Cyan) */}
+        <text x="35" y="340" fontFamily="Inter, sans-serif" fontWeight="900" fontSize="88" fill="#0F2038" className="dark:fill-white">
+          Skill
+        </text>
+        <text x="250" y="340" fontFamily="Inter, sans-serif" fontWeight="900" fontSize="88" fill="#00A8B5">
+          Bridge
+        </text>
+
+        {/* Tagline Accent Lines & Text */}
+        <line x1="35" y1="380" x2="90" y2="380" stroke="#F59E0B" strokeWidth="8" strokeLinecap="round" />
+        <text x="105" y="385" fontFamily="Inter, sans-serif" fontWeight="800" fontSize="22" letterSpacing="3.5" fill="#0F2038" className="dark:fill-slate-300">
+          CONNECTING SKILLS TO OPPORTUNITIES
+        </text>
+        <line x1="510" y1="380" x2="565" y2="380" stroke="#00A8B5" strokeWidth="8" strokeLinecap="round" />
       </svg>
-
-      {showText && (
-        <div className="flex flex-col">
-          <div className="flex items-center text-2xl font-extrabold tracking-tight leading-none">
-            <span className="text-slate-900 dark:text-white">Skill</span>
-            <span className="text-[#00A8B5]">Bridge</span>
-          </div>
-          <span className="text-[9px] font-extrabold tracking-widest text-slate-500 dark:text-slate-400 uppercase mt-0.5">
-            Connecting Skills to Opportunities
-          </span>
-        </div>
-      )}
     </div>
   );
 };
