@@ -7,7 +7,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30s timeout to allow Render free instance cold starts
+  timeout: 60000, // 60s timeout to allow Render free tier backend cold-start spin-up
 });
 
 // Request Interceptor: Attach JWT Token
@@ -22,15 +22,14 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Handle API Errors & Expired Session
+// Response Interceptor: Handle API Errors & Render Server Cold Starts
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (!error.response) {
-      // Network error or backend cold start spin-up timeout
-      console.warn('Network error or backend cold start spin-up in progress...');
+      // Server cold start spin-up or network delay
+      error.customDetail = 'Backend server is waking up on Render (free instance). Please wait 5 seconds and try again.';
     } else if (error.response.status === 401) {
-      // Unauthenticated session cleanup
       if (window.location.pathname.startsWith('/dashboard') || window.location.pathname.startsWith('/profile')) {
         localStorage.removeItem('skillbridge_access_token');
         localStorage.removeItem('skillbridge_user');

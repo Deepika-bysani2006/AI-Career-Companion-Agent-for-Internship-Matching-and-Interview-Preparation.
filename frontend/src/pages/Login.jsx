@@ -24,7 +24,7 @@ export const Login = () => {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
+      setError(err.customDetail || err.response?.data?.detail || 'Login failed. Please check your credentials or click "Continue with Google".');
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,7 @@ export const Login = () => {
       } else if (err.code === 'auth/unauthorized-domain') {
         setError('Current domain is not authorized in Firebase Console (Authentication > Settings > Authorized Domains).');
       } else {
-        setError(err.response?.data?.detail || err.message || 'Google Authentication failed. Please try again.');
+        setError(err.customDetail || err.response?.data?.detail || err.message || 'Google Authentication failed. Please try again.');
       }
     } finally {
       setLoading(false);
