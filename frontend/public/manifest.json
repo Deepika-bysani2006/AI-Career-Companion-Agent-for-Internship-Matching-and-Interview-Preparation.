@@ -6,12 +6,45 @@
     {
       "src": "/favicon.svg",
       "type": "image/svg+xml",
-      "sizes": "512x512 192x192 96x96 48x48"
+      "sizes": "any"
+    },
+    {
+      "src": "/pwa-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180"
     }
   ],
   "start_url": "/",
+  "scope": "/",
   "background_color": "#0f172a",
   "theme_color": "#0d9488",
   "display": "standalone",
-  "orientation": "portrait"
+  "orientation": "portrait-primary",
+  "categories": ["education", "business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Find Internships",
+      "short_name": "Jobs",
+      "url": "/jobs",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "AI Career Chat",
+      "short_name": "AI Chat",
+      "url": "/ai-chat",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    }
+  ]
 }

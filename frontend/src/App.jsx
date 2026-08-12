@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute';
+import { InstallPWA } from './components/InstallPWA';
 
 // Public Pages
 import { Landing } from './pages/Landing';
@@ -76,6 +77,7 @@ export default function App() {
               <Route path="/admin" element={<AdminDashboard />} />
             </Route>
           </Routes>
+          <InstallPWA />
         </Router>
       </AuthProvider>
     </ThemeProvider>

@@ -1,11 +1,15 @@
-const CACHE_NAME = 'skillbridge-v1';
+const CACHE_NAME = 'skillbridge-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/favicon.svg',
+  '/pwa-192x192.png',
+  '/pwa-512x512.png',
+  '/apple-touch-icon.png'
 ];
 
-// Install Event: Cache core static assets
+// Install Event: Cache core static assets & PWA icons
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -15,13 +19,14 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate Event: Cleanup old caches
+// Activate Event: Automatically delete all old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
+            console.log('Purging old PWA cache:', cache);
             return caches.delete(cache);
           }
         })
@@ -31,12 +36,20 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Event: Cache static assets, BYPASS all /api/ requests (no caching of auth or API data)
+// Fetch Event: Network-First strategy for HTML navigation, Cache-First for static assets, ALWAYS bypass /api/
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // NEVER cache API requests or non-GET requests
   if (url.pathname.includes('/api/') || event.request.method !== 'GET') {
+    return;
+  }
+
+  // Network-First for HTML navigation to ensure latest deployments are fetched immediately
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/index.html'))
+    );
     return;
   }
 
