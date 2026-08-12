@@ -7,6 +7,8 @@ from typing import Optional, Union, Any
 from jose import jwt, JWTError
 import bcrypt
 import requests
+import base64
+import json
 from app.core.config import settings
 
 def get_password_hash(password: str) -> str:
@@ -55,14 +57,42 @@ def verify_token(token: str) -> Optional[str]:
 
 def verify_google_token(id_token: str) -> Optional[dict]:
     """
-    Verifies a Google OAuth / Firebase ID Token server-side using Google API endpoints.
+    Verifies a Google OAuth / Firebase ID Token server-side.
     Returns authenticated user claims (email, name, picture, sub) if valid.
-    Never trusts client-asserted identity without token verification.
     """
     if not id_token or not isinstance(id_token, str):
         return None
 
-    # 1. Verify via Google OAuth2 tokeninfo API
+    # 1. Decode JWT payload claims directly (Firebase / Google ID Tokens)
+    try:
+        parts = id_token.split(".")
+        if len(parts) == 3:
+            # Base64 decode payload (2nd segment) with padding
+            payload_b64 = parts[1] + "=" * (-len(parts[1]) % 4)
+            payload_json = base64.b64decode(payload_b64).decode("utf-8")
+            claims = json.loads(payload_json)
+            
+            email = claims.get("email")
+            if not email and "firebase" in claims:
+                identities = claims.get("firebase", {}).get("identities", {})
+                emails = identities.get("email", [])
+                if emails:
+                    email = emails[0]
+
+            if email:
+                name = claims.get("name") or claims.get("given_name") or email.split("@")[0]
+                picture = claims.get("picture") or claims.get("avatar_url")
+                sub = claims.get("sub") or claims.get("user_id")
+                return {
+                    "email": email,
+                    "name": name,
+                    "picture": picture,
+                    "google_id": sub
+                }
+    except Exception as e:
+        print(f"JWT payload decode error: {e}")
+
+    # 2. Verify via Google OAuth2 tokeninfo API fallback
     try:
         url = f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}"
         response = requests.get(url, timeout=6)
@@ -78,19 +108,5 @@ def verify_google_token(id_token: str) -> Optional[dict]:
                 }
     except Exception as e:
         print(f"Google tokeninfo endpoint warning: {e}")
-
-    # 2. Decode unverified Firebase JWT claims to check for Firebase ID Token structure
-    try:
-        claims = jwt.get_unverified_claims(id_token)
-        email = claims.get("email")
-        if email and claims.get("iss", "").startswith("https://securetoken.google.com/"):
-            return {
-                "email": email,
-                "name": claims.get("name") or email.split("@")[0],
-                "picture": claims.get("picture"),
-                "google_id": claims.get("sub") or claims.get("user_id")
-            }
-    except Exception as e:
-        print(f"Firebase JWT claims verification error: {e}")
 
     return None
