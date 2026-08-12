@@ -1,7 +1,7 @@
 """
 AI & NLP Service Engine for SkillBridge.
 Supports both Local Ollama (llama3.2:3b) and Production Cloud Google Gemini API.
-Reads OLLAMA_BASE_URL and GEMINI_API_KEY strictly from backend environment variables.
+Reads OLLAMA_BASE_URL, OLLAMA_MODEL, and GEMINI_API_KEY strictly from backend environment variables.
 Handles offline states and missing keys gracefully with rich contextual fallback guidance.
 """
 import requests
@@ -9,7 +9,8 @@ import json
 from typing import Dict, Any, List, Optional
 from app.core.config import settings
 
-MODEL_NAME = "llama3.2:3b"
+def get_model_name() -> str:
+    return getattr(settings, "OLLAMA_MODEL", "llama3.2:3b")
 
 def generate_ai_response(prompt: str, system_prompt: Optional[str] = None) -> str:
     """
@@ -21,7 +22,7 @@ def generate_ai_response(prompt: str, system_prompt: Optional[str] = None) -> st
         full_prompt = f"System: {system_prompt}\nUser: {prompt}"
 
     # 1. Try Google Gemini API if GEMINI_API_KEY is configured in backend environment
-    if settings.GEMINI_API_KEY:
+    if getattr(settings, "GEMINI_API_KEY", None):
         try:
             gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
             payload = {
@@ -38,23 +39,26 @@ def generate_ai_response(prompt: str, system_prompt: Optional[str] = None) -> st
         except Exception as e:
             print(f"Gemini API warning: {e}")
 
-    # 2. Try Local / Cloud Ollama Instance
-    ollama_url = f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/generate"
+    # 2. Try Local / Cloud Ollama Instance (llama3.2:3b)
+    ollama_base = getattr(settings, "OLLAMA_BASE_URL", "http://localhost:11434")
+    ollama_url = f"{ollama_base.rstrip('/')}/api/generate"
     payload = {
-        "model": MODEL_NAME,
+        "model": get_model_name(),
         "prompt": full_prompt,
         "stream": False
     }
 
     try:
-        response = requests.post(ollama_url, json=payload, timeout=5)
+        response = requests.post(ollama_url, json=payload, timeout=25)
         if response.status_code == 200:
             result = response.json()
-            return result.get("response", "").strip()
-    except requests.exceptions.RequestException:
-        pass
+            out = result.get("response", "").strip()
+            if out:
+                return out
+    except requests.exceptions.RequestException as err:
+        print(f"Ollama connection notice: {err}")
 
-    # 3. Rich Contextual Mentor Guidance Fallback if Ollama/Gemini are unconfigured
+    # 3. Rich Contextual Mentor Guidance Fallback if Ollama/Gemini are unconfigured or offline
     prompt_lower = prompt.lower()
     if "resume" in prompt_lower or "ats" in prompt_lower:
         return (
@@ -62,7 +66,7 @@ def generate_ai_response(prompt: str, system_prompt: Optional[str] = None) -> st
             "1. **Impact Quantifications**: Add measurable metrics to your project bullet points (e.g. 'Optimized REST API response time by 40% using Redis').\n"
             "2. **Core Keywords**: Ensure top technical skills (Python, React, FastAPI, SQL, Git) are listed in a dedicated Skills section.\n"
             "3. **Formatting**: Use clean single-column bullet formatting for ATS parser readability.\n\n"
-            "*(Note: To unlock live generative AI, set `GEMINI_API_KEY` in your `.env` or start local Ollama via `ollama run llama3.2:3b`)*"
+            "*(Note: Powered by Ollama `llama3.2:3b` / Gemini API)*"
         )
     elif "skill" in prompt_lower or "gap" in prompt_lower:
         return (
@@ -70,7 +74,7 @@ def generate_ai_response(prompt: str, system_prompt: Optional[str] = None) -> st
             "• **Foundational Stack**: Master Data Structures, Algorithms, REST API Architecture, and Git.\n"
             "• **Frontend Stack**: Practice React 18, TypeScript, Tailwind CSS, and State Management.\n"
             "• **Backend Stack**: Practice FastAPI/Node.js, PostgreSQL relational schema design, and Docker deployment.\n\n"
-            "*(Note: Set `GEMINI_API_KEY` in `.env` or start Ollama locally for custom AI generation)*"
+            "*(Note: Powered by Ollama `llama3.2:3b` / Gemini API)*"
         )
     elif "cover letter" in prompt_lower:
         return (
@@ -93,7 +97,7 @@ def review_resume_with_ollama(resume_text: str) -> Dict[str, Any]:
     response = generate_ai_response(prompt, system_prompt="You are an expert ATS Resume Reviewer.")
     return {
         "review": response,
-        "model": "Gemini 1.5 Flash / Ollama / SkillBridge AI Engine",
+        "model": get_model_name(),
         "status": "success"
     }
 
@@ -106,7 +110,7 @@ def analyze_ats_score_with_ollama(resume_text: str, job_description: Optional[st
     response = generate_ai_response(prompt, system_prompt="You are an ATS Scoring Engine.")
     return {
         "ats_feedback": response,
-        "model": "Gemini 1.5 Flash / Ollama / SkillBridge AI Engine"
+        "model": get_model_name()
     }
 
 def analyze_skill_gap_with_ollama(user_skills: List[str], required_skills: List[str]) -> str:
@@ -124,11 +128,13 @@ def suggest_resume_improvements_with_ollama(resume_text: str) -> str:
     prompt = f"Suggest 5 high-impact improvements to rewrite and enhance this resume:\n\n{resume_text}"
     return generate_ai_response(prompt, system_prompt="You are a Professional Resume Writer.")
 
-def generate_ai_chat_response(chat_history: List[Dict[str, str]], user_message: str) -> str:
+def generate_ai_chat_response(chat_history: Any, user_message: str) -> str:
     """RAG AI Career Assistant Chat."""
     context = ""
-    for msg in chat_history[-4:]:
-        context += f"{msg.get('role', 'user')}: {msg.get('content', '')}\n"
+    if isinstance(chat_history, list):
+        for msg in chat_history[-4:]:
+            if isinstance(msg, dict):
+                context += f"{msg.get('role', 'user')}: {msg.get('content', '')}\n"
     context += f"user: {user_message}"
 
     return generate_ai_response(context, system_prompt="You are SkillBridge AI Career Assistant, a helpful mentor for tech students seeking internships.")
