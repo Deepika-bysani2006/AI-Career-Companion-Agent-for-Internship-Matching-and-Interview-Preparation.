@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { User, Mail, Lock, Phone, GraduationCap, BookOpen, Calendar, UserPlus } from 'lucide-react';
-import { auth, googleProvider, signInWithPopup, isFirebaseConfigured } from '../config/firebase';
+import { getFirebaseAuth, getGoogleProvider, signInWithPopup, isFirebaseConfigured } from '../config/firebase';
 
 export const Register = () => {
   const [formData, setFormData] = useState({
@@ -45,10 +45,19 @@ export const Register = () => {
     setLoading(true);
     setError('');
     try {
-      await register(formData);
+      await register({
+        full_name: formData.full_name,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone || undefined,
+        college: formData.college || undefined,
+        branch: formData.branch || undefined,
+        year: formData.year || undefined,
+        terms: formData.terms
+      });
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed. Please check details or try Google Sign-Up.');
+      setError(err.customDetail || err.response?.data?.detail || 'Registration failed. Please check details or try Google Sign-Up.');
     } finally {
       setLoading(false);
     }
@@ -58,15 +67,18 @@ export const Register = () => {
     setLoading(true);
     setError('');
 
-    if (!isFirebaseConfigured()) {
-      setError('Firebase Web configuration is missing. Please check VITE_FIREBASE_* environment variables.');
+    const auth = getFirebaseAuth();
+    const provider = getGoogleProvider();
+
+    if (!auth || !provider || !isFirebaseConfigured()) {
+      setError('Firebase Web configuration is initializing. Please try again in 3 seconds.');
       setLoading(false);
       return;
     }
 
     try {
       // 1. Firebase Google Authentication via Popup
-      const result = await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, provider);
       
       // 2. Obtain Firebase User ID Token securely
       const idToken = await result.user.getIdToken(true);
@@ -83,7 +95,7 @@ export const Register = () => {
       } else if (err.code === 'auth/unauthorized-domain') {
         setError('Current domain is not authorized in Firebase Console (Authentication > Settings > Authorized Domains).');
       } else {
-        setError(err.response?.data?.detail || err.message || 'Google Sign-Up failed. Please try again.');
+        setError(err.customDetail || err.response?.data?.detail || err.message || 'Google Sign-Up failed. Please try again.');
       }
     } finally {
       setLoading(false);

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { Mail, Lock, Eye, EyeOff, LogIn, ArrowRight } from 'lucide-react';
-import { auth, googleProvider, signInWithPopup, isFirebaseConfigured } from '../config/firebase';
+import { getFirebaseAuth, getGoogleProvider, signInWithPopup, isFirebaseConfigured } from '../config/firebase';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -34,15 +34,18 @@ export const Login = () => {
     setLoading(true);
     setError('');
 
-    if (!isFirebaseConfigured()) {
-      setError('Firebase Web configuration is missing. Please check VITE_FIREBASE_* environment variables.');
+    const auth = getFirebaseAuth();
+    const provider = getGoogleProvider();
+
+    if (!auth || !provider || !isFirebaseConfigured()) {
+      setError('Firebase Web configuration is initializing. Please try again in 3 seconds.');
       setLoading(false);
       return;
     }
 
     try {
       // 1. Firebase Google Authentication via Popup
-      const result = await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, provider);
       
       // 2. Obtain Firebase User ID Token securely
       const idToken = await result.user.getIdToken(true);
