@@ -1,7 +1,13 @@
 {
-  "name": "skillbridge-frontend",
+  "name": "ai-career-companion-agent-frontend",
+  "displayName": "AI Career Companion Agent for Internship Matching and Interview Preparation",
   "private": true,
   "version": "1.0.0",
+  "description": "AI-powered career companion agent for internship discovery, ATS resume generation, skill gap analysis, and mock interview preparation.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Deepika-bysani2006/AI-Career-Companion-Agent-for-Internship-Matching-and-Interview-Preparation.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

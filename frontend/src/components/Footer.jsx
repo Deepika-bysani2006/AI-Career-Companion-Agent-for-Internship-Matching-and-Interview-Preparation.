@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { PlatformBadge } from './PlatformBadge';
+import { SkillBridgeLogo } from './SkillBridgeLogo';
 
 export const Footer = () => {
   return (
@@ -10,16 +11,9 @@ export const Footer = () => {
           
           {/* Column 1: Brand & Tagline */}
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-teal-500 to-amber-400 flex items-center justify-center text-slate-950 font-black text-lg">
-                SB
-              </div>
-              <span className="text-xl font-bold text-white tracking-tight">
-                SkillBridge
-              </span>
-            </div>
-            <p className="text-sm leading-relaxed text-slate-400">
-              Connecting Skills to Opportunities. Production-ready AI Internship Application Agent powered by FastAPI, React, PostgreSQL, and NLP.
+            <SkillBridgeLogo className="h-10 w-auto" />
+            <p className="text-xs leading-relaxed text-slate-400">
+              Connecting Skills to Opportunities. AI Career Companion Agent for Internship Matching and Interview Preparation powered by FastAPI, React, PostgreSQL, and Gemini AI.
             </p>
           </div>
 
@@ -57,17 +51,17 @@ export const Footer = () => {
               <li>• Frontend: React 18, Vite, Tailwind CSS</li>
               <li>• Backend: FastAPI, Python 3.12</li>
               <li>• Database: Neon PostgreSQL & Docker</li>
+              <li>• AI Engine: Google Gemini 2.5 Flash & Ollama</li>
               <li>• Security: JWT, Google OAuth, bcrypt</li>
-              <li>• AI/NLP: Sentence Transformers, PyMuPDF</li>
             </ul>
           </div>
         </div>
 
         <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-          <p>© {new Date().getFullYear()} SkillBridge – AI Internship Application Agent. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} AI Career Companion Agent for Internship Matching and Interview Preparation. All rights reserved.</p>
           <div className="flex gap-6">
-            <a href="https://github.com/Deepika-bysani2006/SkillBridge-AI-Internship-Agent.git" target="_blank" rel="noreferrer" className="hover:text-teal-400">GitHub Repository</a>
-            <a href="/docs" className="hover:text-teal-400">API Docs</a>
+            <a href="https://github.com/Deepika-bysani2006/AI-Career-Companion-Agent-for-Internship-Matching-and-Interview-Preparation.git" target="_blank" rel="noreferrer" className="hover:text-teal-400">GitHub Repository</a>
+            <a href="https://skillbridge-ai-internship-agent.onrender.com/docs" target="_blank" rel="noreferrer" className="hover:text-teal-400">API Docs</a>
           </div>
         </div>
       </div>

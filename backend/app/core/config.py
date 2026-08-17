@@ -41,7 +41,9 @@ def get_effective_db_host() -> str:
         return "127.0.0.1"
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "SkillBridge – AI Internship Application Agent"
+    PROJECT_NAME: str = "AI Career Companion Agent for Internship Matching and Interview Preparation"
+    PROJECT_SLUG: str = "AI-Career-Companion-Agent-for-Internship-Matching-and-Interview-Preparation"
+    REPOSITORY_URL: str = "https://github.com/Deepika-bysani2006/AI-Career-Companion-Agent-for-Internship-Matching-and-Interview-Preparation.git"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
 
