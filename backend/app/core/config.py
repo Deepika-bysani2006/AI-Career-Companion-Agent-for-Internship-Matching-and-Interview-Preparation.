@@ -97,8 +97,12 @@ class Settings(BaseSettings):
     APIFY_UNSTOP_ACTOR_ID: str = os.getenv("APIFY_UNSTOP_ACTOR_ID", "")
     APIFY_INTERNSHALA_ACTOR_ID: str = os.getenv("APIFY_INTERNSHALA_ACTOR_ID", "")
 
+    # AI Engine Settings
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    AI_PROVIDER: str = os.getenv("AI_PROVIDER", "gemini")
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
 
     # Upload Directory
     UPLOAD_DIR: str = os.path.join(BASE_DIR, "uploads")

@@ -1,8 +1,9 @@
 """
 AI Career Assistant RAG Chat Routers for SkillBridge.
-Supports both /chat and /ai/chat endpoints with Ollama integration and production fallback.
+Supports both /chat and /ai/chat endpoints with Google Gemini API & PostgreSQL RAG Job Search.
 """
-from fastapi import APIRouter, Depends, HTTPException, OptionalHeader
+from fastapi import APIRouter, Depends, HTTPException, Header
+from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.models.models import User, ChatSession, ChatMessage, Resume
@@ -14,12 +15,13 @@ from app.core.config import settings
 
 router = APIRouter(prefix="", tags=["AI Career Assistant"])
 
-def get_optional_user(token: Optional[str] = None, db: Session = Depends(get_db)) -> Optional[User]:
-    """Retrieves user if token is provided, or returns None gracefully."""
-    if not token:
+def get_optional_user(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)) -> Optional[User]:
+    """Retrieves user if Authorization token header is provided, or returns None gracefully."""
+    if not authorization:
         return None
     try:
-        user_id = verify_token(token.replace("Bearer ", "").strip())
+        token = authorization.replace("Bearer ", "").strip()
+        user_id = verify_token(token)
         if user_id:
             return db.query(User).filter(User.id == user_id).first()
     except Exception:
@@ -33,9 +35,10 @@ def send_chat_message(
     current_user: Optional[User] = Depends(get_optional_user), 
     db: Session = Depends(get_db)
 ):
-    """Sends user prompt to SkillBridge AI Assistant (Ollama llama3.2:3b / Gemini / Contextual Fallback)."""
+    """
+    Sends user prompt to SkillBridge AI Career Assistant powered by Google Gemini API & PostgreSQL RAG.
+    """
     session_id = data.session_id
-    user_id = current_user.id if current_user else "guest"
 
     if current_user and not session_id:
         new_session = ChatSession(user_id=current_user.id, title=data.message[:30] + "...")
@@ -50,7 +53,7 @@ def send_chat_message(
         db.add(u_msg)
         db.commit()
 
-    # User context for RAG AI system prompt
+    # Candidate profile context for RAG
     skills = ["Python", "React", "FastAPI", "SQL", "Git"]
     name = "Student"
     
@@ -65,7 +68,15 @@ def send_chat_message(
         "skills": skills
     }
 
-    ai_text = generate_ai_chat_response(data.message, user_context)
+    # Generate response using Gemini AI + PostgreSQL RAG
+    result = generate_ai_chat_response(
+        prompt=data.message, 
+        user_context=user_context, 
+        db=db,
+        conversation_history=getattr(data, "conversation_history", None)
+    )
+
+    ai_text = result.get("response", "")
 
     # Save AI response if session exists
     if current_user and session_id:
@@ -77,9 +88,11 @@ def send_chat_message(
         "success": True,
         "response": ai_text,
         "message": ai_text,
-        "provider": "ollama",
-        "model": getattr(settings, "OLLAMA_MODEL", "llama3.2:3b"),
-        "session_id": session_id
+        "source": result.get("source", "gemini"),
+        "provider": "gemini",
+        "model": result.get("model", getattr(settings, "GEMINI_MODEL", "gemini-2.5-flash")),
+        "session_id": session_id,
+        "jobs": result.get("jobs", [])
     }
 
 @router.get("/chat/sessions")
