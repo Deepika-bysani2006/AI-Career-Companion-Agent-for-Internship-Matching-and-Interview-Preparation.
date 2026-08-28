@@ -8,6 +8,7 @@
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python%203.12-009688?logo=fastapi)](https://fastapi.tiangolo.com)
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%2016-336791?logo=postgresql)](https://postgres.org)
 [![Gemini AI](https://img.shields.io/badge/AI%20Engine-Google%20Gemini%202.5%20Flash-4285F4?logo=google)](https://aistudio.google.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/Container-Docker%20Compose-2496ED?logo=docker)](https://docker.com)
 
 ---
@@ -143,4 +144,5 @@ docker compose up -d
 
 ## 📜 9. License & Credits
 
-© 2026 AI Career Companion Agent Project Team. Built with FastAPI, React, PostgreSQL, and Google Gemini.
+This project is open source and available under the [MIT License](LICENSE).  
+Copyright (c) 2026 Deepika Bysani. Built with FastAPI, React, PostgreSQL, and Google Gemini.
